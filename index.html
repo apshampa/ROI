@@ -152,7 +152,7 @@
                 <div class="module-box">
                     <div class="checkbox-row">
                         <label>
-                            <input type="checkbox" id="chk-modules" onchange="updateDeviceCostDisplay()">
+                            <input type="checkbox" checked id="chk-modules" onchange="updateDeviceCostDisplay()">
                             Include All Modules
                         </label>
                         <span class="cost-tag" style="background:#dbeafe; color:#1e40af;">+ ₹1.2 L</span>
@@ -166,17 +166,17 @@
 
                 <div class="input-label">Report Credit Type</div>
                 <div class="toggle-group">
-                    <button class="toggle-btn active" onclick="setReportCost(40, this)">Premium (₹40)</button>
-                    <button class="toggle-btn" onclick="setReportCost(100, this)">Ultra (₹100)</button>
+                    <button class="toggle-btn" onclick="setReportCost(40, this)">Premium (₹40)</button>
+                    <button class="toggle-btn active" onclick="setReportCost(100, this)">Ultra (₹100)</button>
                 </div>
 
                 <div class="consumables-box">
                     <div class="checkbox-row">
                         <label>
-                            <input type="checkbox" id="chk-electrodes" >
+                            <input type="checkbox" checked id="chk-electrodes" >
                             Include Electrodes
                         </label>
-                        <span class="cost-tag">₹20 / patient</span>
+                        <span class="cost-tag"> per patient</span>
                     </div>
                     <div style="font-size:0.75rem; color: var(--text-light); margin-top:5px;">
                         Consumable (Report+Electrodes): <strong style="color:var(--text-dark)">₹<span id="val-total-consumable">60</span></strong> / patient
@@ -187,12 +187,12 @@
                 
                 <div class="input-group">
                     <label class="input-label">Average Patients / Month</label>
-                    <input type="number" id="inp-footfall" class="num-input" value="30" min="0">
+                    <input type="number" id="inp-footfall" class="num-input" value="50" min="0">
                 </div>
 
                 <div class="input-group">
-                    <label class="input-label">Charge Per Report (₹)</label>
-                    <input type="number" id="inp-charge" class="num-input" value="500" min="0" step="100">
+                    <label class="input-label">Charge Per Report (2 Reports Per Patient on Avg.)</label>
+                    <input type="number" id="inp-charge" class="num-input" value="1500" min="0" step="100">
                 </div>
 
                 <button class="generate-btn" onclick="calculateROI()">Calculate Projection</button>
