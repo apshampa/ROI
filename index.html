@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pheezee ROI Projector</title>
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #012e57; /* Deep Navy */
+            --secondary: #001a36; 
+            --accent: #e0eefc; 
+            --highlight: #00c48c; /* Green for profit */
+            --warning: #ef4444; /* Red for costs */
+            --text-dark: #1f2937;
+            --text-light: #64748b;
+            --bg-light: #f8fafc;
+            --white: #ffffff;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        
+        body { background-color: var(--bg-light); color: var(--text-dark); line-height: 1.6; }
+
+        /* Header */
+        header {
+            background-color: var(--white);
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        .logo-container { display: flex; align-items: center; gap: 12px; }
+        .static-logo { height: 45px; width: auto; } 
+        
+        .logo-text { font-size: 1.5rem; font-weight: 700; color: var(--primary); letter-spacing: -0.025em; line-height: 1.2; }
+        .logo-sub { font-size: 0.75rem; color: var(--text-light); display: block; font-weight: 400; }
+        .tagline { font-size: 0.875rem; color: var(--text-light); font-weight: 500; }
+
+        /* Layout - Vertical Split */
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            display: grid;
+            grid-template-columns: 1fr 1.4fr; /* Left (Inputs) | Right (Graph) */
+            gap: 2rem;
+            align-items: start;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        h2 { font-size: 1.1rem; margin-bottom: 1rem; color: var(--primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
+
+        /* Inputs */
+        .input-group { margin-bottom: 1.5rem; }
+        .input-label { display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem; color: var(--text-dark); }
+        
+        .num-input {
+            width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 1rem; font-weight: 600; color: var(--primary); transition: border-color 0.2s;
+        }
+        .num-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--accent); }
+
+        /* Toggle Buttons */
+        .toggle-group { display: flex; background: #f1f5f9; padding: 4px; border-radius: 8px; margin-bottom: 1.25rem; }
+        .toggle-btn {
+            flex: 1; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: 500; background: transparent; color: var(--text-light); transition: all 0.2s; font-size: 0.9rem;
+        }
+        .toggle-btn.active { background: var(--white); color: var(--primary); box-shadow: 0 1px 2px rgba(0,0,0,0.1); font-weight: 700; }
+
+        /* Special Checkbox Box */
+        .module-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; }
+        .checkbox-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        .checkbox-row label { cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--primary); }
+        .cost-tag { font-size: 0.8rem; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; color: var(--text-dark); font-weight: 600; }
+        
+        /* Consumables Box (Grey) */
+        .consumables-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; }
+
+        /* Generate Button */
+        .generate-btn {
+            width: 100%; background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-top: 10px; box-shadow: 0 4px 6px rgba(1, 46, 87, 0.2);
+        }
+        .generate-btn:hover { background: var(--secondary); transform: translateY(-1px); }
+        .generate-btn:active { transform: translateY(0); }
+
+        /* Stats & Results */
+        .results-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1rem; }
+        .big-stat { font-size: 2.25rem; font-weight: 700; color: var(--primary); line-height: 1; }
+        .stat-label { font-size: 0.75rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+
+        /* Tabs & Graph Controls */
+        .tabs-container { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; margin-bottom: 1rem; }
+        .tabs { display: flex; }
+        .tab { padding: 0.5rem 1rem; cursor: pointer; font-size: 0.9rem; color: var(--text-light); border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+
+        /* Monthly/Yearly Toggle Switch */
+        .view-toggle { display: none; align-items: center; background: #f1f5f9; border-radius: 20px; padding: 2px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+        .view-option { padding: 4px 12px; border-radius: 18px; color: var(--text-light); transition: all 0.2s; }
+        .view-option.selected { background: var(--white); color: var(--primary); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+
+        .download-btn {
+            position: absolute; top: 2rem; right: 2rem; background: #ffffff; border: 1px solid #e2e8f0; color: var(--primary); padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; transition: all 0.2s; z-index: 10;
+        }
+        .download-btn:hover { background: var(--accent); border-color: #bfdbfe; }
+
+        @media (max-width: 900px) {
+            .container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <img src="logo.png" alt="Pheezee" class="static-logo" onerror="this.style.display='none'">
+            
+        </div>
+        <div class="tagline">A Product by Startoon Labs</div>
+    </header>
+
+    <div class="container">
+        
+        <div class="left-col">
+            <div class="card">
+                <h2>1. Device Investment</h2>
+                
+                <div class="input-label">Select Kit</div>
+                <div class="toggle-group">
+                    <button class="toggle-btn active" onclick="setBasePrice(106000, this)">Basic (₹1.06 L)</button>
+                    <button class="toggle-btn" onclick="setBasePrice(160000, this)">Premium (₹1.6 L)</button>
+                </div>
+
+                <div class="module-box">
+                    <div class="checkbox-row">
+                        <label>
+                            <input type="checkbox" id="chk-modules" onchange="updateDeviceCostDisplay()">
+                            Include All Modules
+                        </label>
+                        <span class="cost-tag" style="background:#dbeafe; color:#1e40af;">+ ₹1.2 L</span>
+                    </div>
+                    <div style="font-size:0.75rem; color: var(--text-light); margin-top:5px;">
+                        Total Device Cost: <strong style="color:var(--primary)">₹<span id="val-total-device">1,06,000</span></strong>
+                    </div>
+                </div>
+
+                <h2>2. Operating Costs</h2>
+
+                <div class="input-label">Report Credit Type</div>
+                <div class="toggle-group">
+                    <button class="toggle-btn active" onclick="setReportCost(40, this)">Premium (₹40)</button>
+                    <button class="toggle-btn" onclick="setReportCost(100, this)">Ultra (₹100)</button>
+                </div>
+
+                <div class="consumables-box">
+                    <div class="checkbox-row">
+                        <label>
+                            <input type="checkbox" id="chk-electrodes" >
+                            Include Electrodes
+                        </label>
+                        <span class="cost-tag">₹20 / patient</span>
+                    </div>
+                    <div style="font-size:0.75rem; color: var(--text-light); margin-top:5px;">
+                        Consumable (Report+Electrodes): <strong style="color:var(--text-dark)">₹<span id="val-total-consumable">60</span></strong> / patient
+                    </div>
+                </div>
+
+                <h2>3. Patient Volume</h2>
+                
+                <div class="input-group">
+                    <label class="input-label">Average Patients / Month</label>
+                    <input type="number" id="inp-footfall" class="num-input" value="30" min="0">
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">Charge Per Report (₹)</label>
+                    <input type="number" id="inp-charge" class="num-input" value="500" min="0" step="100">
+                </div>
+
+                <button class="generate-btn" onclick="calculateROI()">Calculate Projection</button>
+            </div>
+        </div>
+
+        <div class="right-col">
+            <div class="card">
+                <button class="download-btn" onclick="downloadGraph()">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                    Save Report
+                </button>
+
+                <h2>ROI Projection</h2>
+
+                <div class="results-header">
+                    <div>
+                        <div class="stat-label">Break-Even Time</div>
+                        <div class="big-stat" id="roi-time">--</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="stat-label" id="top-stat-label">Monthly Total Income</div>
+                        <div class="big-stat" style="font-size: 1.8rem;" id="top-stat-value">₹0</div>
+                        <div style="font-size:0.75rem; color:var(--text-light)">(Net Profit)</div>
+                    </div>
+                </div>
+
+                <div class="tabs-container">
+                    <div class="tabs">
+                        <div class="tab active" id="tab-line" onclick="switchTab('line')">Growth Curve</div>
+                        <div class="tab" id="tab-bar" onclick="switchTab('bar')">Bar Chart</div>
+                    </div>
+                    
+                    <div class="view-toggle" id="view-toggle" onclick="toggleView()">
+                        <div class="view-option selected" id="opt-monthly">Monthly</div>
+                        <div class="view-option" id="opt-yearly">Yearly</div>
+                    </div>
+                </div>
+
+                <div id="roiGraph" style="width:100%; height:420px;"></div>
+                
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // State
+        let baseDevicePrice = 106000;
+        let moduleCost = 120000;
+        let currentDeviceTotal = 106000;
+        let patientsPerMonth = 60;
+        let chargePerReport = 1000;
+        let reportCost = 40; 
+        let electrodeCost = 20;
+        let includeElectrodes = true;
+        let currentTab = 'line';
+        let isYearlyView = false;
+
+        // Elements
+        const elFootfall = document.getElementById('inp-footfall');
+        const elCharge = document.getElementById('inp-charge');
+        const elElectrodes = document.getElementById('chk-electrodes');
+        const elModules = document.getElementById('chk-modules');
+        const elTopStatLabel = document.getElementById('top-stat-label');
+        const elTopStatValue = document.getElementById('top-stat-value');
+        const elTotalDeviceDisplay = document.getElementById('val-total-device');
+
+        // Helpers
+        function formatMoney(amount) {
+            if (amount >= 10000000) return '₹' + (amount / 10000000).toFixed(2) + ' Cr';
+            if (amount >= 100000) return '₹' + (amount / 100000).toFixed(2) + ' L';
+            return '₹' + amount.toLocaleString('en-IN');
+        }
+
+        function formatMoneyAxis(amount) {
+            if (Math.abs(amount) >= 10000000) return (amount / 10000000).toFixed(2) + ' Cr';
+            if (Math.abs(amount) >= 100000) return (amount / 100000).toFixed(1) + ' L';
+            if (Math.abs(amount) >= 1000) return (amount / 1000).toFixed(0) + ' k';
+            return amount;
+        }
+
+        function updateDeviceCostDisplay() {
+            const hasModules = elModules.checked;
+            currentDeviceTotal = baseDevicePrice + (hasModules ? moduleCost : 0);
+            elTotalDeviceDisplay.textContent = currentDeviceTotal.toLocaleString('en-IN');
+        }
+
+        function updateConsumableDisplay() {
+            const consumablePerPatient = reportCost + (elElectrodes.checked ? electrodeCost : 0);
+            document.getElementById('val-total-consumable').textContent = consumablePerPatient;
+        }
+
+        // Interaction Handlers
+        function setBasePrice(price, btn) {
+            baseDevicePrice = price;
+            btn.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateDeviceCostDisplay();
+        }
+
+        function setReportCost(cost, btn) {
+            reportCost = cost;
+            btn.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateConsumableDisplay();
+        }
+
+        function switchTab(tabName) {
+            currentTab = tabName;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-' + tabName).classList.add('active');
+            
+            const toggle = document.getElementById('view-toggle');
+            toggle.style.display = (tabName === 'bar') ? 'flex' : 'none';
+            calculateROI(); 
+        }
+
+        function toggleView() {
+            isYearlyView = !isYearlyView;
+            const optMonthly = document.getElementById('opt-monthly');
+            const optYearly = document.getElementById('opt-yearly');
+            
+            if (isYearlyView) {
+                optMonthly.classList.remove('selected');
+                optYearly.classList.add('selected');
+            } else {
+                optYearly.classList.remove('selected');
+                optMonthly.classList.add('selected');
+            }
+            calculateROI(); 
+        }
+
+        // Logic
+        function calculateROI() {
+            // Fetch values from inputs
+            patientsPerMonth = parseInt(elFootfall.value) || 0;
+            chargePerReport = parseInt(elCharge.value) || 0;
+            includeElectrodes = elElectrodes.checked;
+            
+            updateDeviceCostDisplay();
+            updateConsumableDisplay();
+
+            const consumablePerPatient = reportCost + (includeElectrodes ? electrodeCost : 0);
+            const monthlyGrossRevenue = patientsPerMonth * chargePerReport;
+            const monthlyConsumableCost = patientsPerMonth * consumablePerPatient;
+            const monthlyNetProfit = monthlyGrossRevenue - monthlyConsumableCost;
+
+            let monthsToBreakEven = 0;
+            if (monthlyNetProfit > 0) {
+                monthsToBreakEven = currentDeviceTotal / monthlyNetProfit;
+            } else {
+                monthsToBreakEven = 999;
+            }
+            const daysToBreakEven = Math.ceil(monthsToBreakEven * 30);
+
+            const elRoiTime = document.getElementById('roi-time');
+            if (monthlyNetProfit <= 0) elRoiTime.textContent = "Never";
+            else if (monthsToBreakEven < 1) elRoiTime.textContent = `${daysToBreakEven} Days`;
+            else elRoiTime.textContent = `${monthsToBreakEven.toFixed(1)} Months`;
+
+            updateTopStat(monthlyNetProfit);
+
+            if (currentTab === 'line') {
+                drawGrowthGraph(monthlyNetProfit, monthsToBreakEven);
+            } else {
+                drawBarGraph(monthlyGrossRevenue, monthlyConsumableCost, monthlyNetProfit);
+            }
+        }
+
+        function updateTopStat(monthlyNetProfit) {
+            if (currentTab === 'line') {
+                elTopStatLabel.textContent = "Monthly Total Income";
+                elTopStatValue.textContent = formatMoney(monthlyNetProfit);
+            } else {
+                if (isYearlyView) {
+                    elTopStatLabel.textContent = "Yearly Total Income";
+                    elTopStatValue.textContent = formatMoney(monthlyNetProfit * 12);
+                } else {
+                    elTopStatLabel.textContent = "Monthly Total Income";
+                    elTopStatValue.textContent = formatMoney(monthlyNetProfit);
+                }
+            }
+        }
+
+        function drawGrowthGraph(monthlyNet, breakEvenMonth) {
+            const maxMonths = 18;
+            const xValues = [];
+            const cumulativeData = [];
+            const barColors = [];
+
+            // Initial Investment
+            xValues.push(0);
+            cumulativeData.push(-currentDeviceTotal);
+            barColors.push('#ef4444');
+
+            for (let i = 1; i <= maxMonths; i++) {
+                xValues.push(i);
+                const cumVal = (monthlyNet * i) - currentDeviceTotal;
+                cumulativeData.push(cumVal);
+                barColors.push(cumVal >= 0 ? '#00c48c' : '#ef4444');
+            }
+
+            const traceBar = {
+                x: xValues,
+                y: cumulativeData,
+                type: 'bar',
+                name: 'Net Wealth',
+                marker: { color: barColors, opacity: 0.5 },
+                hovertemplate: 'Month %{x}<br>Net Income: ₹%{y}<extra></extra>'
+            };
+
+            const traceLine = {
+                x: xValues,
+                y: cumulativeData,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Trend',
+                line: { color: '#012e57', width: 4 },
+                hoverinfo: 'skip'
+            };
+
+            // Calculate Ticks
+            const maxVal = Math.max(...cumulativeData);
+            const minVal = Math.min(...cumulativeData);
+            const step = (maxVal - minVal) / 6;
+            const tickVals = [0]; 
+            for(let v = minVal; v <= maxVal; v+=step) tickVals.push(v);
+            tickVals.sort((a,b) => a-b);
+
+            const layout = {
+                margin: { t: 40, r: 20, l: 60, b: 40 },
+                font: { family: 'Inter, sans-serif' },
+                xaxis: { 
+                    title: 'Timeline (Months)', 
+                    fixedrange: true, gridcolor: '#f1f5f9',
+                    tickmode: 'linear', dtick: 3
+                },
+                yaxis: { 
+                    title: 'Cumulative Net Profit (₹)', 
+                    fixedrange: true, gridcolor: '#f1f5f9',
+                    tickvals: tickVals,
+                    ticktext: tickVals.map(v => formatMoneyAxis(v))
+                },
+                showlegend: false,
+                hovermode: 'x unified',
+                shapes: [{ type: 'line', x0: 0, y0: 0, x1: maxMonths, y1: 0, line: { color: '#64748b', width: 1 } }],
+                // Branding Image Logic
+                images: [{
+                    source: "Logo.png",
+                    xref: "paper", yref: "paper", x: 0.5, y: 0.5, sizex: 0.4, sizey: 0.4,
+                    xanchor: "center", yanchor: "middle", opacity: 0.1, layer: "below"
+                }]
+            };
+
+            if (breakEvenMonth > 0 && breakEvenMonth < maxMonths) {
+                layout.annotations = [{
+                    x: breakEvenMonth, y: 0, xref: 'x', yref: 'y',
+                    text: 'Break Even', showarrow: true, arrowhead: 7, ax: 0, ay: -50,
+                    font: { color: '#012e57', size: 12, weight: 700 },
+                    bgcolor: '#ffffff', bordercolor: '#012e57'
+                }];
+            }
+
+            Plotly.newPlot('roiGraph', [traceBar, traceLine], layout, { responsive: true, displayModeBar: false });
+        }
+
+        function drawBarGraph(mRevenue, mCost, mProfit) {
+            const multiplier = isYearlyView ? 12 : 1;
+            const suffix = isYearlyView ? ' (Yearly)' : ' (Monthly)';
+            
+            const revenue = mRevenue * multiplier;
+            const cost = mCost * multiplier;
+            const profit = mProfit * multiplier;
+
+            const categories = ['Revenue', 'Op. Costs', 'Net Profit'];
+            const values = [revenue, cost, profit];
+            const colors = ['#3b82f6', '#ef4444', '#00c48c']; 
+
+            const trace = {
+                x: categories,
+                y: values,
+                type: 'bar',
+                marker: { color: colors },
+                text: values.map(v => formatMoney(v)),
+                textposition: 'auto',
+                hovertemplate: '%{x}: %{text}<extra></extra>'
+            };
+
+            const layout = {
+                margin: { t: 40, r: 20, l: 60, b: 40 },
+                font: { family: 'Inter, sans-serif' },
+                xaxis: { title: 'Financial Breakdown' + suffix, fixedrange: true },
+                yaxis: { title: 'Amount (₹)', fixedrange: true, gridcolor: '#f1f5f9' },
+                showlegend: false,
+                images: [{
+                    source: "logo.png",
+                    xref: "paper", yref: "paper", x: 0.5, y: 0.5, sizex: 0.4, sizey: 0.4,
+                    xanchor: "center", yanchor: "middle", opacity: 0.1, layer: "below"
+                }]
+            };
+            
+            Plotly.newPlot('roiGraph', [trace], layout, { responsive: true, displayModeBar: false });
+        }
+
+        function downloadGraph() {
+            Plotly.downloadImage('roiGraph', { format: 'png', width: 900, height: 600, filename: 'Pheezee_Report' });
+        }
+
+        // Init
+        updateDeviceCostDisplay();
+        updateConsumableDisplay();
+        calculateROI();
+
+    </script>
+</body>
+</html>
